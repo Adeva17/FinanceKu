@@ -243,7 +243,7 @@ $username = $_SESSION['username'];
             </div>
         </div>
         <div class="hero">
-            <div class="hello" id="hello">Hello, <?php echo $username; ?></div>
+            <div class="hello" id="hello">Hello, <?php echo $nickname; ?></div>
             <div class="budget-info">Budget bulanan anda tersisa:</div>
             <div class="budget-amount" id="budget-amount">Rp 0.00</div>
             <div class="frame-2">
