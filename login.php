@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Password is correct
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['nickname'] = $user['nickname']; 
         header('Location: dashboard.php');
         exit;
     } else {

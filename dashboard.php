@@ -2,7 +2,7 @@
 session_start();
 
 // Ambil nama pengguna dari sesi
-$username = $_SESSION['username'];
+$nickname = $_SESSION['nickname'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
