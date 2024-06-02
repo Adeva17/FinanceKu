@@ -4,8 +4,9 @@ require 'dbconn.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
-    $phone = $_POST['phone'];
     $email = $_POST['email'];
+    $fullName = $_POST['fullName'];
+    $nickname = $_POST['nickname'];
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT); // Ensure correct variable name
 
     $conn = getConnection();
@@ -21,8 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = 'Email already registered. Please use a different email or login.';
     } else {
         // Insert new user
-        $stmt = $conn->prepare('INSERT INTO users (username, phone, email, password) VALUES (?, ?, ?, ?)');
-        $stmt->bind_param('ssss', $username, $phone, $email, $password); // Ensure correct variable name
+        $stmt = $conn->prepare('INSERT INTO users (username, fullName, nickname, email, password) VALUES (?, ?, ?, ?, ?)');
+        $stmt->bind_param('sssss', $username, $fullName, $nickname, $email, $password); // Ensure correct variable name
 
         if ($stmt->execute()) {
             // Registration successful, redirect to login page
@@ -55,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         <form action="register.php" method="post">
             <input type="text" name="username" placeholder="Username" required>
-            <input type="tel" name="phone" placeholder="No. Telp" required>
+            <input type="text" name="fullName" placeholder="Nama lengkap" required>
+            <input type="text" name="nickname" placeholder="Nama panggilan" required>
             <input type="email" name="email" placeholder="E-mail" required>
             <input type="password" name="password" placeholder="Password" required>
             <div class="center-button">
