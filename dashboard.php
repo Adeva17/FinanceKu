@@ -228,7 +228,7 @@ $nickname = $_SESSION['nickname'];
         <div class="head-bar">
             <div class="title">Financeku.</div>
             <div class="menu">
-                <a href="halaman_tambah.php">
+                <a href="aturBudget.php">
                     <img src="img/plus.png" alt="Add Icon">
                 </a>
                 <a href="halaman_laporan.php">
