@@ -16,8 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($user && password_verify($password, $user['password'])) {
         // Password is correct
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
+        $_SESSION['userId'] = $user['id'];
         $_SESSION['nickname'] = $user['nickname']; 
         header('Location: dashboard.php');
         exit;
