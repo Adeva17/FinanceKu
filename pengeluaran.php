@@ -1,21 +1,59 @@
+<?php
+session_start();
+include('dbconn.php');
+
+$status = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get userId from session
+    $userId = $_SESSION['userId'];
+    // Get current date
+    $date = date('Y-m-d');
+    $amount = $_POST['amount'];
+    $expenseCategory = $_POST['expenseCategory'];
+    $description = $_POST['description'];
+
+    // Create a connection
+    $conn = getConnection();
+
+    // Prepare the SQL statement to avoid SQL injection
+    $stmt = $conn->prepare("INSERT INTO expense (userId, date, amount, expenseCategory, description) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param("isdss", $userId, $date, $amount, $expenseCategory, $description);
+
+    if ($stmt->execute()) {
+        $status = 'ok';
+    } else {
+        $status = 'err';
+    }
+
+    $stmt->close();
+    $conn->close();
+
+    header('Location: dashboard.php?status=' . $status);
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengeluaran</title>
+    <title>Financeku - Tambah Pengeluaran</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            height: 100%;
+        body {
             margin: 0;
             font-family: 'Inter', sans-serif;
             background: linear-gradient(180deg, #FFFFFF 0%, #D0D0D0 100%);
-            background-attachment: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        .pengeluaran {
+        .dashboard {
             position: relative;
             width: 100%;
             height: 100%;
@@ -27,11 +65,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0;
             margin-bottom: 20px;
             margin-top: 15px;
         }
 
-        .title {
+        .financeku {
             font-size: 35px;
             font-weight: 700;
             color: #000000;
@@ -70,63 +109,86 @@
             text-decoration: none;
         }
 
-        .pengeluaran-content {
+        .content {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            width: 100%;
-            max-width: 500px; 
-            margin: 50px auto; 
-            padding: 20px;
-            box-sizing: border-box;
-            border-radius: 10px;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
-        .pengeluaran-content .tambah {
-            font-weight: 500;
-            font-size: 40px; 
-            text-align: center;
+        .content .title {
+            font-weight: 700;
+            font-size: 45px;
+            line-height: 58px;
+            letter-spacing: -0.02em;
             color: #000000;
-            font-weight: bold;
-        }
-
-        input[type="nominal"],
-        input[type="nama-pengeluaran"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px; 
-            font-size: 16px;
-            border: 1px solid #828282;
-            border-radius: 8px;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-        }
-
-        textarea {
-            height: 120px;
-        }
-
-        .tambahkan-button {
             text-align: center;
         }
 
-        .tambahkan-button a {
-            background-color: #000;
-            color: #fff;
-            border-radius: 15px;
-            padding: 10px 20px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+        .field, .textarea-field {
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 16px;
+            gap: 10px;
+            width: 245px;
+            background: #FFFFFF;
+            border: 1px solid #828282;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
         }
 
+        .field input, .field select, .textarea-field textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: #828282;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .textarea-field textarea {
+            resize: none;
+            height: 120px;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .add-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 115px;
+            height: 38px;
+            background: #000000;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 100%;
+            color: #FFFFFF;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <div class="pengeluaran">
+    <div class="dashboard">
         <div class="head-bar">
-            <div class="title">Financeku.</div>
+            <div class="financeku">Financeku.</div>
             <div class="menu">
                 <a href="halaman_tambah.php">
                     <img src="img/plus.png" alt="Add Icon">
@@ -142,21 +204,35 @@
                 </button>
             </div>
         </div>
-        <div class="pengeluaran-content">
-            <div class="tambah">Tambah Pengeluaran</div>
-            <input type="nominal" placeholder="Nominal">
-            <input type="nama-pengeluaran" placeholder="Nama Pengeluaran">
-            <select name="kategori" id="kategori">
-                <option value="">Kategori</option>
-                <option value="pembayaran">Pembayaran Listrik</option>
-                <option value="penarikan">Penarikan Tunai</option>
-            </select>
-            <textarea name="deskripsi" id="deskripsi" placeholder="Deskripsi"></textarea>
-            <div class="tambahkan-button">
-                <a href="tambahkan.php">Tambahkan</a>
-            </div>
+
+        <div class="content">
+            <form method="POST">
+                <div class="title">Tambah Pengeluaran</div>
+                <div class="field">
+                    <input type="number" name="amount" placeholder="Nominal" required>
+                </div>
+                <div class="field">
+                    <input type="text" name="expenseName" placeholder="Nama pengeluaran" required>
+                </div>
+                <div class="field">
+                    <select name="expenseCategory" required>
+                        <option value="" disabled selected>Kategori</option>
+                        <option value="Makanan">Makanan</option>
+                        <option value="Transportasi">Transportasi</option>
+                        <option value="Hiburan">Hiburan</option>
+                        <option value="Pendididikan">Pendidikan</option>
+                        <option value="Rumah Tangga">Rumah Tangga</option>
+                        <option value="Hutang">Hutang</option>
+                        <option value="Kesehatan">Kesehatan</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="textarea-field">
+                    <textarea name="description" placeholder="Deskripsi" required></textarea>
+                </div>
+                <button type="submit" class="add-button">Tambahkan</button>
+            </form>
         </div>
     </div>
-
 </body>
 </html>

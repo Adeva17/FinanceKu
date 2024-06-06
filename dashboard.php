@@ -1,8 +1,71 @@
 <?php
 session_start();
+include('dbconn.php');
+
+// Check if the user is logged in
+if (!isset($_SESSION['userId']) || !isset($_SESSION['nickname'])) {
+    // Redirect to login page if not logged in
+    header('Location: login.php');
+    exit();
+}
 
 // Ambil nama pengguna dari sesi
 $nickname = $_SESSION['nickname'];
+$userId = $_SESSION['userId'];
+
+// Create a connection
+$conn = getConnection();
+
+// Handle form submission to update the budget
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['budget'])) {
+    $newBudget = floatval($_POST['budget']);
+    $currentYear = date('Y');
+    $currentMonth = date('n');
+
+    // Update the budget in the database
+    $updateBudgetQuery = "INSERT INTO budgets (userId, year, month, amount) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount = VALUES(amount)";
+    $stmt = $conn->prepare($updateBudgetQuery);
+    $stmt->bind_param("iiid", $userId, $currentYear, $currentMonth, $newBudget);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Fetch income data for the user
+$incomeQuery = "SELECT SUM(amount) AS totalIncome FROM income WHERE userId = ?";
+$stmt = $conn->prepare($incomeQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$totalIncome = isset($row['totalIncome']) ? $row['totalIncome'] : 0.00;
+$stmt->close();
+
+// Fetch expense data for the user
+$expenseQuery = "SELECT SUM(amount) AS totalExpenses FROM expense WHERE userId = ?";
+$stmt = $conn->prepare($expenseQuery);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$totalExpenses = isset($row['totalExpenses']) ? $row['totalExpenses'] : 0.00;
+$stmt->close();
+
+// Fetch current month's budget for the user
+$currentYear = date('Y');
+$currentMonth = date('n');
+$budgetQuery = "SELECT amount FROM budgets WHERE userId = ? AND year = ? AND month = ?";
+$stmt = $conn->prepare($budgetQuery);
+$stmt->bind_param("iii", $userId, $currentYear, $currentMonth);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$currentBudget = isset($row['amount']) ? $row['amount'] : 0.00;
+$stmt->close();
+
+// Calculate saldo akhir
+$saldoAkhir = $currentBudget + $totalIncome - $totalExpenses;
+
+$conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -193,7 +256,8 @@ $nickname = $_SESSION['nickname'];
             box-shadow: -4px 8px 20px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
             margin-right: 20px; /* Atur jarak kanan antara setiap kotak */
-            margin-left: 20px; /* Atur jarak kiri antara setiap kotak */
+            margin-left: 20px; /* Atur jarak kiri antara setiap
+            kotak */
         }
 
         .budgetting .amount {
@@ -243,9 +307,9 @@ $nickname = $_SESSION['nickname'];
             </div>
         </div>
         <div class="hero">
-            <div class="hello" id="hello">Hello, <?php echo $nickname; ?></div>
+            <div class="hello" id="hello">Hello, <?php echo htmlspecialchars($nickname); ?></div>
             <div class="budget-info">Budget bulanan anda tersisa:</div>
-            <div class="budget-amount" id="budget-amount">Rp 0.00</div>
+            <div class="budget-amount" id="budget-amount">Rp <?php echo number_format($saldoAkhir, 2); ?></div>
             <div class="frame-2">
                 <div class="primary-button">
                     <a href="pemasukan.php">Pemasukan</a>
@@ -262,28 +326,28 @@ $nickname = $_SESSION['nickname'];
             </div>
             <div class="frame-6">
                 <div class="budgetting">
-                    <div class="amount" id="saldo-awal">Rp 0.00</div>
+                    <div class="amount" id="saldo-awal">Rp <?php echo number_format($currentBudget, 2); ?></div>
                     <div class="details">
                         <div class="edit">Edit</div>
                         <div class="text">Saldo Awal</div>
                     </div>
                 </div>
                 <div class="budgetting">
-                    <div class="amount" id="pemasukan">Rp 0.00</div>
+                    <div class="amount" id="pemasukan">Rp <?php echo number_format($totalIncome, 2); ?></div>
                     <div class="details">
                         <div class="edit">Edit</div>
                         <div class="text">Pemasukan</div>
                     </div>
                 </div>
                 <div class="budgetting">
-                    <div class="amount" id="pengeluaran">Rp 0.00</div>
+                    <div class="amount" id="pengeluaran">Rp <?php echo number_format($totalExpenses, 2); ?></div>
                     <div class="details">
                         <div class="edit">Edit</div>
                         <div class="text">Pengeluaran</div>
                     </div>
                 </div>
                 <div class="budgetting">
-                    <div class="amount" id="saldo-akhir">Rp 0.00</div>
+                    <div class="amount" id="saldo-akhir">Rp <?php echo number_format($saldoAkhir, 2); ?></div>
                     <div class="details">
                         <div class="edit">Edit</div>
                         <div class="text">Saldo Akhir</div>
@@ -294,18 +358,6 @@ $nickname = $_SESSION['nickname'];
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('ambil_data_user.php')
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('hello').textContent = `Hello, ${data.username}`;
-                document.getElementById('budget-amount').textContent = `Rp ${data.monthly_budget || '0.00'}`;
-                document.getElementById('saldo-awal').textContent = `Rp ${data.income || '0.00'}`;
-                document.getElementById('pemasukan').textContent = `Rp ${data.income || '0.00'}`;
-                document.getElementById('pengeluaran').textContent = `Rp ${data.expenses || '0.00'}`;
-                document.getElementById('saldo-akhir').textContent = `Rp ${(data.income - data.expenses) || '0.00'}`;
-            })
-            .catch(error => console.error('Error fetching user data:', error));
-
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const now = new Date();
             const currentMonth = monthNames[now.getMonth()];

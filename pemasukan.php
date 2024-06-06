@@ -1,3 +1,38 @@
+<?php
+session_start();
+include('dbconn.php');
+
+$status = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get userId from session
+    $userId = $_SESSION['userId'];
+    // Get current date
+    $date = date('Y-m-d');
+    $amount = $_POST['amount'];
+    $incomeSource = $_POST['incomeSource'];
+
+    // Create a connection
+    $conn = getConnection();
+
+    // Prepare the SQL statement to avoid SQL injection
+    $stmt = $conn->prepare("INSERT INTO income (userId, date, amount, incomeSource) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("isds", $userId, $date, $amount, $incomeSource);
+
+    if ($stmt->execute()) {
+        $status = 'ok';
+    } else {
+        $status = 'err';
+    }
+
+    $stmt->close();
+    $conn->close();
+
+    header('Location: dashboard.php?status=' . $status);
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -132,9 +167,24 @@
             line-height: 100%;
             color: #FFFFFF;
         }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
+<?php
+    if ($status == 'ok') {
+        echo '<div class="success">SUKSES!, Data pemasukan berhasil ditambahkan</div>';
+    } elseif ($status == 'err') {
+        echo '<div class="error">ERROR!, Data gagal ditambahkan</div>';
+    }
+?>
     <div class="dashboard">
         <div class="head-bar">
             <div class="financeku">Financeku.</div>
@@ -155,14 +205,16 @@
         </div>
 
         <div class="content">
-            <div class="title">Tambah Pemasukan</div>
-            <div class="field">
-                <input type="text" placeholder="Nominal">
-            </div>
-            <div class="field">
-                <input type="text" placeholder="Sumber">
-            </div>
-            <div class="add-button">Tambahkan</div>
+            <form action="pemasukan.php" method="POST">
+                <div class="title">Tambah Pemasukan</div>
+                <div class="field">
+                    <input type="text" name="amount" placeholder="Nominal" required>
+                </div>
+                <div class="field">
+                    <input type="text" name="incomeSource" placeholder="Sumber" required>
+                </div>
+                <button type="submit" class="add-button">Tambahkan</button>
+            </form>
         </div>
     </div>
 </body>
