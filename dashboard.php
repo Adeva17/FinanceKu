@@ -2,7 +2,7 @@
 session_start();
 include('dbconn.php');
 
-// Check if the user is logged in
+// Periksa apakah pengguna sudah berhasil login
 if (!isset($_SESSION['userId']) || !isset($_SESSION['nickname'])) {
     // Redirect to login page if not logged in
     header('Location: login.php');
@@ -13,24 +13,24 @@ if (!isset($_SESSION['userId']) || !isset($_SESSION['nickname'])) {
 $nickname = $_SESSION['nickname'];
 $userId = $_SESSION['userId'];
 
-// Create a connection
+// Buat Koneksi
 $conn = getConnection();
 
-// Handle form submission to update the budget
+// Menangani pengiriman formulir untuk memperbarui anggaran
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['budget'])) {
     $newBudget = floatval($_POST['budget']);
     $currentYear = date('Y');
     $currentMonth = date('n');
 
-    // Update the budget in the database
-    $updateBudgetQuery = "INSERT INTO budgets (userId, year, month, amount) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount = VALUES(amount)";
+    // Memperbarui budget dalam database
+    $BudgetQuery = "INSERT INTO budgets (userId, year, month, amount) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE amount = VALUES(amount)";
     $stmt = $conn->prepare($updateBudgetQuery);
     $stmt->bind_param("iiid", $userId, $currentYear, $currentMonth, $newBudget);
     $stmt->execute();
     $stmt->close();
 }
 
-// Fetch income data for the user
+// Ambil data pemasukan untuk pengguna
 $incomeQuery = "SELECT SUM(amount) AS totalIncome FROM income WHERE userId = ?";
 $stmt = $conn->prepare($incomeQuery);
 $stmt->bind_param("i", $userId);
@@ -40,7 +40,7 @@ $row = $result->fetch_assoc();
 $totalIncome = isset($row['totalIncome']) ? $row['totalIncome'] : 0.00;
 $stmt->close();
 
-// Fetch expense data for the user
+// Ambil data pengeluaran untuk pengguna
 $expenseQuery = "SELECT SUM(amount) AS totalExpenses FROM expense WHERE userId = ?";
 $stmt = $conn->prepare($expenseQuery);
 $stmt->bind_param("i", $userId);
@@ -50,7 +50,7 @@ $row = $result->fetch_assoc();
 $totalExpenses = isset($row['totalExpenses']) ? $row['totalExpenses'] : 0.00;
 $stmt->close();
 
-// Fetch current month's budget for the user
+// Ambil anggaran bulan ini untuk pengguna
 $currentYear = date('Y');
 $currentMonth = date('n');
 $budgetQuery = "SELECT amount FROM budgets WHERE userId = ? AND year = ? AND month = ?";
@@ -62,7 +62,7 @@ $row = $result->fetch_assoc();
 $currentBudget = isset($row['amount']) ? $row['amount'] : 0.00;
 $stmt->close();
 
-// Calculate saldo akhir
+// Menghitung Saldo Akhir
 $saldoAkhir = $currentBudget + $totalIncome - $totalExpenses;
 
 $conn->close();
@@ -255,9 +255,8 @@ $conn->close();
             background: #F6F6F6;
             box-shadow: -4px 8px 20px rgba(0, 0, 0, 0.1);
             border-radius: 12px;
-            margin-right: 20px; /* Atur jarak kanan antara setiap kotak */
-            margin-left: 20px; /* Atur jarak kiri antara setiap
-            kotak */
+            margin-right: 20px; 
+            margin-left: 20px;
         }
 
         .budgetting .amount {
@@ -298,9 +297,6 @@ $conn->close();
                 <a href="halaman_laporan.php">
                     <img src="img/report.png" alt="Report Icon">
                 </a>
-                <a href="halaman_pengaturan.php">
-                    <img src="img/config.png" alt="Settings Icon">
-                </a>
                 <button class="logout">
                     <a href="logout.php">Log out</a>
                 </button>
@@ -322,7 +318,9 @@ $conn->close();
         <div class="recap-keuangan">
             <div class="frame-7">
                 <div class="mei-2024" id="current-month-year">Mei 2024</div>
-                <div class="lihat-detail">Lihat Detail</div>
+                <a href="halaman_laporan.php" class="lihat-detail-link">
+                    <div class="lihat-detail">Lihat Detail</div>
+                </a>
             </div>
             <div class="frame-6">
                 <div class="budgetting">
@@ -356,13 +354,14 @@ $conn->close();
             </div>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        $(document).ready(function() {
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const now = new Date();
             const currentMonth = monthNames[now.getMonth()];
             const currentYear = now.getFullYear();
-            document.getElementById('current-month-year').textContent = `${currentMonth} ${currentYear}`;
+            $('#current-month-year').text(`${currentMonth} ${currentYear}`);
         });
     </script>
 </body>
