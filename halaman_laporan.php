@@ -203,7 +203,7 @@ mysqli_close($conn);
         }
 
         .tabcontent {
-            display: none;
+            display: block;
             padding: 0 20px;
             margin-top: -1px;
             width: 1200px;
@@ -291,8 +291,7 @@ mysqli_close($conn);
             font-size: 18px;
             margin-bottom: 15px;
             text-align: center;
-        }
-    </style>
+        }    </style>
 </head>
 <body>
     <div class="dashboard">
@@ -435,9 +434,9 @@ mysqli_close($conn);
         document.addEventListener('DOMContentLoaded', (event) => {
             // Mempertahankan opsi yang dipilih setelah filter
             const urlParams = new URLSearchParams(window.location.search);
-            const selectedYear =urlParams.get('year');
-            const selectedMonth =urlParams.get('month');
-            const selectedType =urlParams.get('type');
+            const selectedYear = urlParams.get('year');
+            const selectedMonth = urlParams.get('month');
+            const selectedType = urlParams.get('type');
 
             if (selectedYear) {
                 document.getElementById('yearSelect').value = selectedYear;
@@ -452,16 +451,16 @@ mysqli_close($conn);
             // Tab dan search
             document.querySelector('.tab button:first-child').click();
             document.getElementById('searchInput').addEventListener('keyup', function() {
-                var searchValue = this.value.tolowerCase();
+                var searchValue = this.value.toLowerCase();
                 var tables = document.querySelectorAll('.tabcontent table tbody');
-                tables.forEach(function(tbody){
+                tables.forEach(function(tbody) {
                     var rows = tbody.getElementsByTagName('tr');
                     for (var i = 0; i < rows.length; i++) {
                         var cells = rows[i].getElementsByTagName('td');
                         var found = false;
                         for (var j = 0; j < cells.length; j++) {
                             var cellValue = cells[j].textContent || cells[j].innerText;
-                            cellValue = cellValue.tolowerCase();
+                            cellValue = cellValue.toLowerCase();
                             if (cellValue.indexOf(searchValue) > -1) {
                                 found = true;
                                 break;
@@ -478,18 +477,18 @@ mysqli_close($conn);
         });
 
         function openTab(evt, tabName) {
-        var i, tabcontent, tablinks;
-        tabcontent = document.getElementsByClassName("tabcontent");
-        for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
         }
-        tablinks = document.getElementsByClassName("tablinks");
-        for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].className = tablinks[i].className.replace(" active", "");
-        }
-        document.getElementById(tabName).style.display = "block";
-        evt.currentTarget.className += " active";
-    }
     </script>
 </body>
 </html>
